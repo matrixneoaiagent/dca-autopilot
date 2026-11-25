@@ -54,7 +54,7 @@ The result is a small, auditable automation loop that a normal user can actually
 2. **Plan.** `createPlan(basePerBuy, drawdownBps, cooldown, maxBuys, quoteBudget)` moves the budget from the unallocated balance into the plan and emits `DcaPlanCreated`.
 3. **Mirror.** `DcaReactive` receives the event, stores the plan, and initialises its high-water mark from the latest price it has seen. It also subscribes to `DcaPlanBudgetIncreased`, `DcaPlanCancelled`, `DcaBuy`, and `DcaBuySkipped`.
 4. **Watch.** Each `PriceTick` updates the plan's high-water mark. Before the first buy, the reference is that high-water mark; afterwards it is the last confirmed buy price. A buy is eligible when `price <= reference * (1 - drawdownBps / 10000)`, the cooldown has elapsed, the plan has buys left, and the mirrored budget is not exhausted.
-5. **Callback.** The reactive contract sets a pending marker and calls `SYSTEM.requestCallbackV_1_0` with `executeBuy(planId, tickId, price)` and a 600k gas limit.
+5. **Callback.** The reactive contract sets a pending marker and calls `SYSTEM.requestCallbackV_1_0` with `executeBuy(planId, tickId, price)`. The live gas limit is 1.5M after a 775k `executeBuy` estimate on Sepolia; the initial 600k limit was too low and the permissionless `retry` path recovered the first buy.
 6. **Execute.** The callback proxy replaces the first argument with the reactive address. The vault checks the proxy, the reactive address, the published tick, the price age, tick monotonicity, cooldown, the last-buy drawdown, the exact quote cost vs the remaining budget, and the WETH reserve. On success it transfers the fixed WETH amount to the plan owner and emits `DcaBuy`.
 7. **Confirm.** The reactive sees `DcaBuy`, clears the pending marker, and updates `lastBuyPrice`, `buys`, and `quoteSpent`. If the vault emitted `DcaBuySkipped` instead, the marker is cleared and the plan stays eligible for a later tick.
 
@@ -196,23 +196,25 @@ The deploy script writes `deployments/latest.json`; `demo/setup_plan.sh` writes 
 
 ## Deployed addresses and transactions
 
-> **Status: built, tested locally, not yet deployed.** No public address or
-> transaction hash is claimed in this repository yet. The orchestrator will run
-> `deploy/deploy.sh` with a funded testnet key and fill the table below and
-> `docs/SUBMISSION_CHECKLIST.md`. Placeholders are intentional.
+> **Status: live on Ethereum Sepolia + Reactive Lasna (2026-11-25).** Plan 1
+> executed two buys: 0.01 WETH for 19.10 USDC at 1910 and 0.01 WETH for 18.00
+> USDC at 1800. The first callback request used the initial 600k gas limit,
+> which was below the 775k `executeBuy` estimate; the owner raised the reactive
+> limit to 1.5M and the permissionless `retry(1)` recovered the buy. Both
+> `DcaBuy` events are on-chain.
 
 | Item | Value |
 |---|---|
-| mUSDC (11155111) | `________` |
-| mWETH (11155111) | `________` |
-| PriceFeed (11155111) | `________` |
-| DcaReactive (5318007) | `________` |
-| DcaVault (11155111) | `________` |
-| Plan creation tx | `________` |
-| First `PriceTick` tx | `________` |
-| Reactive tx → buy callback | `________` |
-| `executeBuy` callback tx | `________` |
-| First `DcaBuy` tx | `________` |
+| mUSDC (11155111) | `0x055b7139133cd90D8e6cC332e0BdCB1617C4F715` |
+| mWETH (11155111) | `0x2c2cd38a98436BB5D1035f4E6771b4c5c12368e6` |
+| PriceFeed (11155111) | `0x64a7a30E101Db41861DA6E040dBfcaEA96dFCbED` |
+| DcaReactive (5318007) | `0x3B79fe65C5C69D890Eb001A96e545276a9135B3E` |
+| DcaVault (11155111) | `0xE9157B69b66dD4bd5A4AD0f0afdBac3f28e0987D` |
+| Plan creation tx | `0x1e65785a40d5d0e6e33b76761a150401ee8f55bab97f474d3980fff85b105c8d` |
+| First `PriceTick` tx (2020) | `0x3b7adf714b5eb4bef7ac2543a084e6655e9d78ab6d40e88e3679ae93f658f8fe` |
+| Reactive tx → buy callback (retry) | `0xeb96b3ada92295fd8b4455e128feba23ca06a0e652ffbace2e1b2629eaffd752` |
+| `executeBuy` callback tx / first `DcaBuy` | `0xe0ff40be2f9c7cb22e3d7d569147bb942e3bc769368a183c4325e0b9bc17a09f` |
+| Second buy `DcaBuy` tx | `0xa33e4728ff216b227ffb819e4d0a99d07a9d447aceedab89c2a64e3a2c91ffb8` |
 
 ## Limitations and production path
 

@@ -1,0 +1,85 @@
+{
+ "ts": "20261125T105500Z",
+ "plan_id": 1,
+ "owner": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+ "demo_user": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+ "contracts": {
+  "usdc": "0x055b7139133cd90D8e6cC332e0BdCB1617C4F715",
+  "weth": "0x2c2cd38a98436BB5D1035f4E6771b4c5c12368e6",
+  "price_feed": "0x64a7a30E101Db41861DA6E040dBfcaEA96dFCbED",
+  "reactive": "0x3B79fe65C5C69D890Eb001A96e545276a9135B3E",
+  "vault": "0xE9157B69b66dD4bd5A4AD0f0afdBac3f28e0987D"
+ },
+ "params": {
+  "base_per_buy": 10000000000000000,
+  "drawdown_bps": 500,
+  "cooldown": 30,
+  "max_buys": 5,
+  "quote_budget": 200000000
+ },
+ "txs": {
+  "deploy_usdc": "0xd2361944133e126ea482d006b8b0c2c855c12ace45c45fe306c7aa2103dd65c6",
+  "deploy_weth": "0x9d0e801134480fc62bd3170283f1c207483b28850626bd1a19d217b3f57ed593",
+  "deploy_feed": "0x1bcce4f746dde6d95cba0b2eaf948c8eee2d42d30e8de5de56ac0bd7476f382d",
+  "deploy_reactive": "0x67a91b2db5a4e95285b3bd1fd42455dd3eafdfb4a83af7b19032ab8a3f69ecd8",
+  "deploy_vault": "0x617f4c2b799649d767339bcd40a39e556e728d76ec2b1035b34e40e61cd28455",
+  "set_vault": "0x757255d8e9887afbe04ee6188d0f0e84eb35ee7a0ea22be0fccb59d54958490a",
+  "fund_reactive": "0x03d689961382eed30dc872cba147bd68cc79df6777a176f81c6482e918fda7a2",
+  "fund_vault": "0x5d6b13f7715ae686a5672993fcb035d762639f8a41edefc852fbfd5d4cfa806a",
+  "mint_usdc": "0xc9fb2ad1f95df9812e942ebcc306327566ec88286ef871005bfe39ad14a07fdc",
+  "mint_weth": "0x18ca1101158bbf5534ef82bb7603e482c1ec7df44c85dbd3a733492319ecdb0a",
+  "approve_usdc": "0xe47ba263af96ba1256cc68c04febdaccb29de614d2240e3605160ce1366a3e2b",
+  "approve_weth": "0xa856d3b1ec22b623c096bd3ac0c4261c22b4353a761b3d3d28a3b9e935ba4baa",
+  "deposit_quote": "0x00194ec8553472e01f9674dbc8f7b8205cf7d170826f1efdbec84f0f4cef2ec3",
+  "create_plan": "0x1e65785a40d5d0e6e33b76761a150401ee8f55bab97f474d3980fff85b105c8d",
+  "deposit_base_reserve": "0x4e339690b924f4238f687d8e0546a1b53133fb6076939a6ea5afcbda218cf548",
+  "tick_2000": "0x9e9c2a225d7a9bc7c01aef4533a4413b40ccecbd302229e1fa4d73214aae8856",
+  "tick_2020": "0x3b7adf714b5eb4bef7ac2543a084e6655e9d78ab6d40e88e3679ae93f658f8fe",
+  "tick_1910": "0x30e59cafc7a956f6ab9e84c5137cdb353cdb09bdea55bc8a5fcc36df4c96070d",
+  "tick_1800": "0x3e7e4e5516557bb496f77500c2dde240d03a889fa7ae34bd00b17c9b477d8088",
+  "buy_requested_tick3": "0x795f4fb0841aeae1680cb1dc55621e16318592006294b1d5a98ab184af8ce29c",
+  "failed_delivery_600k": "0x5250ba4ff6e592848bab8b69792ed6a8454ef5c8eb33076b55be6d31f99d887a",
+  "set_buy_gas_limit": "0x6e1a9fbe5171a29f6e90c8d35307c617dc4a8e9c8e860104358f099017637e3e",
+  "retry_tick3": "0xeb96b3ada92295fd8b4455e128feba23ca06a0e652ffbace2e1b2629eaffd752",
+  "buy_requested_tick4": "0xefb32aaf9a13044460f4edf901c3bef66ca55c8bd806160472ee73054a37d172",
+  "dca_buy_1": "0xe0ff40be2f9c7cb22e3d7d569147bb942e3bc769368a183c4325e0b9bc17a09f",
+  "dca_buy_2": "0xa33e4728ff216b227ffb819e4d0a99d07a9d447aceedab89c2a64e3a2c91ffb8"
+ },
+ "ticks": [
+  {
+   "tick": 1,
+   "price": 200000000000,
+   "tx": "0x9e9c2a225d7a9bc7c01aef4533a4413b40ccecbd302229e1fa4d73214aae8856"
+  },
+  {
+   "tick": 2,
+   "price": 202000000000,
+   "tx": "0x3b7adf714b5eb4bef7ac2543a084e6655e9d78ab6d40e88e3679ae93f658f8fe"
+  },
+  {
+   "tick": 3,
+   "price": 191000000000,
+   "tx": "0x30e59cafc7a956f6ab9e84c5137cdb353cdb09bdea55bc8a5fcc36df4c96070d"
+  },
+  {
+   "tick": 4,
+   "price": 180000000000,
+   "tx": "0x3e7e4e5516557bb496f77500c2dde240d03a889fa7ae34bd00b17c9b477d8088"
+  }
+ ],
+ "buys": [
+  {
+   "tick": 3,
+   "quoteIn": 19100000,
+   "price": 191000000000,
+   "tx": "0xe0ff40be2f9c7cb22e3d7d569147bb942e3bc769368a183c4325e0b9bc17a09f"
+  },
+  {
+   "tick": 4,
+   "quoteIn": 18000000,
+   "price": 180000000000,
+   "tx": "0xa33e4728ff216b227ffb819e4d0a99d07a9d447aceedab89c2a64e3a2c91ffb8"
+  }
+ ],
+ "explorer": "https://sepolia.etherscan.io"
+}

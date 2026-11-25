@@ -1,0 +1,63 @@
+{
+ "ticks": [
+  {
+   "tick": 1,
+   "price": 200000000000,
+   "tx": "9e9c2a225d7a9bc7c01aef4533a4413b40ccecbd302229e1fa4d73214aae8856",
+   "block": 12209048
+  },
+  {
+   "tick": 2,
+   "price": 202000000000,
+   "tx": "3b7adf714b5eb4bef7ac2543a084e6655e9d78ab6d40e88e3679ae93f658f8fe",
+   "block": 12209055
+  },
+  {
+   "tick": 3,
+   "price": 191000000000,
+   "tx": "30e59cafc7a956f6ab9e84c5137cdb353cdb09bdea55bc8a5fcc36df4c96070d",
+   "block": 12209056
+  },
+  {
+   "tick": 4,
+   "price": 180000000000,
+   "tx": "3e7e4e5516557bb496f77500c2dde240d03a889fa7ae34bd00b17c9b477d8088",
+   "block": 12209091
+  }
+ ],
+ "buys": [
+  {
+   "plan": 1,
+   "tick": 3,
+   "quoteIn": 19100000,
+   "baseOut": 10000000000000000,
+   "price": 191000000000,
+   "tx": "e0ff40be2f9c7cb22e3d7d569147bb942e3bc769368a183c4325e0b9bc17a09f",
+   "block": 12209085
+  },
+  {
+   "plan": 1,
+   "tick": 4,
+   "quoteIn": 18000000,
+   "baseOut": 10000000000000000,
+   "price": 180000000000,
+   "tx": "a33e4728ff216b227ffb819e4d0a99d07a9d447aceedab89c2a64e3a2c91ffb8",
+   "block": 12209093
+  }
+ ],
+ "plan": [
+  "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+  10000000000000000,
+  500,
+  30,
+  5,
+  200000000,
+  37100000,
+  2,
+  1795604052,
+  180000000000,
+  4,
+  1795603464,
+  true
+ ]
+}

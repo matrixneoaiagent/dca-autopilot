@@ -1,0 +1,35 @@
+{
+  "ts": "20261125T103934Z",
+  "block": 12209017,
+  "deployer": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+  "owner": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+  "demo_user": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+  "origin_chain": "sepolia",
+  "origin_chain_id": 11155111,
+  "rpc_origin": "https://ethereum-sepolia-rpc.publicnode.com",
+  "rpc_lasna": "https://lasna-rpc.rnk.dev/",
+  "explorer": "https://sepolia.etherscan.io",
+  "callback_proxy": "0xAa14d9Cd0f788Ca23d11805986C1d8bd035D23b4",
+  "reactive_faucet": "0x9b9BB25f1A81078C544C829c5EB7822d747Cf434",
+  "chain_ids": {
+    "origin": 11155111,
+    "reactive": 5318007
+  },
+  "contracts": {
+    "usdc": "0x055b7139133cd90D8e6cC332e0BdCB1617C4F715",
+    "weth": "0x2c2cd38a98436BB5D1035f4E6771b4c5c12368e6",
+    "price_feed": "0x64a7a30E101Db41861DA6E040dBfcaEA96dFCbED",
+    "reactive": "0x3B79fe65C5C69D890Eb001A96e545276a9135B3E",
+    "vault": "0xE9157B69b66dD4bd5A4AD0f0afdBac3f28e0987D"
+  },
+  "txs": {
+    "deploy_usdc": "0xd2361944133e126ea482d006b8b0c2c855c12ace45c45fe306c7aa2103dd65c6",
+    "deploy_weth": "0x9d0e801134480fc62bd3170283f1c207483b28850626bd1a19d217b3f57ed593",
+    "deploy_feed": "0x1bcce4f746dde6d95cba0b2eaf948c8eee2d42d30e8de5de56ac0bd7476f382d",
+    "deploy_reactive": "0x67a91b2db5a4e95285b3bd1fd42455dd3eafdfb4a83af7b19032ab8a3f69ecd8",
+    "deploy_vault": "0x617f4c2b799649d767339bcd40a39e556e728d76ec2b1035b34e40e61cd28455",
+    "set_vault": "0x757255d8e9887afbe04ee6188d0f0e84eb35ee7a0ea22be0fccb59d54958490a",
+    "fund_reactive": "0x03d689961382eed30dc872cba147bd68cc79df6777a176f81c6482e918fda7a2",
+    "fund_vault": "0x5d6b13f7715ae686a5672993fcb035d762639f8a41edefc852fbfd5d4cfa806a"
+  }
+}
