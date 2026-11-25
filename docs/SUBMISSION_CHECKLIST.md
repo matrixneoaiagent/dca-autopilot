@@ -15,8 +15,8 @@ Deadline: **2026-12-05 20:00 UTC**. Submit at <https://dorahacks.io/hackathon/re
 | Build name | **DCA Autopilot — set-and-forget dip buyer** |
 | Track | **Set It and Forget It** (one track only) |
 | Short description | A reactive DCA vault: deposit USDC, set a fixed WETH amount and a 5% drawdown, and a Reactive contract on Lasna buys the dip on Sepolia within a cooldown, max-buy and budget. The vault authenticates every callback and keeps unspent budget withdrawable. |
-| GitHub | https://github.com/matrixneoaiagent/dca-autopilot, `main` branch, commit `TBD` |
-| Demo video | TBD (2:00, < 3:00) |
+| GitHub | https://github.com/matrixneoaiagent/dca-autopilot, `main` branch, commit `0489546` |
+| Demo video | https://files.catbox.moe/wyo4sm.mp4 (2:15, < 3:00) |
 | Contract addresses | mUSDC `0x055b7139133cd90D8e6cC332e0BdCB1617C4F715`, mWETH `0x2c2cd38a98436BB5D1035f4E6771b4c5c12368e6`, feed `0x64a7a30E101Db41861DA6E040dBfcaEA96dFCbED`, reactive `0x3B79fe65C5C69D890Eb001A96e545276a9135B3E`, vault `0xE9157B69b66dD4bd5A4AD0f0afdBac3f28e0987D` |
 | Transaction hashes | see the evidence table below |
 | Team | solo |

@@ -149,6 +149,10 @@ docs/
   local-demo-output.txt      captured Anvil rehearsal output
 ```
 
+## Demo video
+
+[2:15 walkthrough](https://files.catbox.moe/wyo4sm.mp4) — architecture, live addresses, the two on-chain buys, the gas fix, and the tests.
+
 ## Reproduce
 
 Requirements: Foundry, Python 3.11+, `jq`. Node is not required.
