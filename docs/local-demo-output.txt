@@ -1,0 +1,57 @@
+$ PORT=8562 PYTHON=<venv>/bin/python ./demo/local_demo.sh
+# 2026-11-25T10:32:36Z  local Anvil rehearsal; addresses are throwaway
+anvil http://127.0.0.1:8562  chain 11155111  account 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+usdc      0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+weth      0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
+feed      0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
+reactive  0x0165878A594ca255338adfa4d48449f69242Eb8F
+vault     0xa513E6E4b8f2a923D98304ec87F64353C4D5C853
+wrote /tmp/opencode/dca-local.json
+DCA Autopilot local rehearsal
+rpc http://127.0.0.1:8562  chain 11155111  owner 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+created plan 1, relayed 1 plan event(s)
+
+== after setup ==
+plan 1: active True  buys 0/5  spent 0.00/200.00 USDC  last buy $0.00
+reactive:      buys 0  spent 0.00 USDC  hwm $0.00  pending False
+balances:      user USDC 4,800.00  wallet WETH 8.0000  vault WETH reserve 2.0000
+accounting:    quote 5,000.00 USDC  quoteReserve 0.00 USDC
+tick  1  price $2,000.00  hwm $2,000.00  last buy $0.00  buys 0  pending False
+tick  2  price $2,010.00  hwm $2,010.00  last buy $0.00  buys 0  pending False
+tick  3  price $2,020.00  hwm $2,020.00  last buy $0.00  buys 0  pending False
+tick  4  price $1,950.00  hwm $2,020.00  last buy $0.00  buys 0  pending False
+tick  5  price $1,910.00  hwm $2,020.00  last buy $1,910.00  buys 1  pending False  relayed 1
+tick  6  price $1,850.00  hwm $2,020.00  last buy $1,910.00  buys 1  pending False
+         advanced 31s
+tick  7  price $1,800.00  hwm $2,020.00  last buy $1,800.00  buys 2  pending False  relayed 1
+         advanced 31s
+tick  8  price $1,700.00  hwm $2,020.00  last buy $1,700.00  buys 3  pending False  relayed 1
+         advanced 31s
+tick  9  price $1,600.00  hwm $2,020.00  last buy $1,600.00  buys 4  pending False  relayed 1
+         advanced 31s
+tick 10  price $1,500.00  hwm $2,020.00  last buy $1,500.00  buys 5  pending False  relayed 1
+         advanced 31s
+tick 11  price $1,400.00  hwm $2,020.00  last buy $1,500.00  buys 5  pending False
+
+== after 5 buys and a max-buy tick ==
+plan 1: active True  buys 5/5  spent 85.10/200.00 USDC  last buy $1,500.00
+reactive:      buys 5  spent 85.10 USDC  hwm $2,020.00  pending False
+balances:      user USDC 4,800.00  wallet WETH 8.0500  vault WETH reserve 1.9500
+accounting:    quote 5,000.00 USDC  quoteReserve 85.10 USDC
+
+cancelling plan; expected refund 114.90 USDC
+
+== after cancel ==
+plan 1: active False  buys 5/5  spent 85.10/200.00 USDC  last buy $1,500.00
+reactive:      buys 5  spent 85.10 USDC  hwm $2,020.00  pending False
+balances:      user USDC 4,914.90  wallet WETH 8.0500  vault WETH reserve 1.9500
+accounting:    quote 5,000.00 USDC  quoteReserve 85.10 USDC
+withdrew 4914.90 USDC of unallocated budget
+
+== after withdraw ==
+plan 1: active False  buys 5/5  spent 85.10/200.00 USDC  last buy $1,500.00
+reactive:      buys 5  spent 85.10 USDC  hwm $2,020.00  pending False
+balances:      user USDC 0.00  wallet WETH 8.0500  vault WETH reserve 1.9500
+accounting:    quote 85.10 USDC  quoteReserve 85.10 USDC
+
+local rehearsal passed

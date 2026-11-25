@@ -1,0 +1,20 @@
+# solidity / foundry
+out/
+cache/
+broadcast/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# secrets and local state
+.env
+deploy/config.env
+demo/state.json
+demo/*.local.json
+demo/*.local-state.json
+
+# os
+.DS_Store

@@ -1,0 +1,261 @@
+#!/usr/bin/env bash
+# Deploy DCA Autopilot on an EVM testnet origin/destination + Reactive Lasna.
+#
+#   ORIGIN_CHAIN=sepolia       (default) Ethereum Sepolia 11155111
+#   ORIGIN_CHAIN=base-sepolia  Base Sepolia 84532
+#
+#   cp deploy/config.env.example deploy/config.env
+#   $EDITOR deploy/config.env
+#   ./deploy/deploy.sh --dry-run
+#   ./deploy/deploy.sh
+#
+# The script never prints a private key. Use a dedicated testnet key.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if ! command -v forge >/dev/null 2>&1; then
+  if [[ -x "$HOME/.foundry/bin/forge" ]]; then
+    export PATH="$HOME/.foundry/bin:$PATH"
+  else
+    echo "forge/cast/jq not found. Run inside: nix-shell -p foundry --run './deploy/deploy.sh'" >&2
+    exit 2
+  fi
+fi
+command -v jq >/dev/null || { echo "jq is required" >&2; exit 2; }
+
+CONFIG=${CONFIG:-deploy/config.env}
+DRY_RUN=0
+[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1
+
+if [[ -f "$CONFIG" ]]; then
+  # shellcheck disable=SC1090
+  set -a; source "$CONFIG"; set +a
+fi
+
+ORIGIN_CHAIN=${ORIGIN_CHAIN:-sepolia}
+case "$ORIGIN_CHAIN" in
+  sepolia)
+    DEFAULT_CHAIN_ID=11155111
+    DEFAULT_RPC=https://ethereum-sepolia-rpc.publicnode.com
+    DEFAULT_PROXY=0xAa14d9Cd0f788Ca23d11805986C1d8bd035D23b4
+    DEFAULT_EXPLORER=https://sepolia.etherscan.io
+    DEFAULT_FAUCET=0x9b9BB25f1A81078C544C829c5EB7822d747Cf434
+    ORIGIN_NAME="Ethereum Sepolia"
+    ;;
+  base-sepolia)
+    DEFAULT_CHAIN_ID=84532
+    DEFAULT_RPC=https://sepolia.base.org
+    DEFAULT_PROXY=0x476F44b11F5C942c58f4c8E3d0300E5710743585
+    DEFAULT_EXPLORER=https://sepolia.basescan.org
+    DEFAULT_FAUCET=0x2afaFD298b23b62760711756088F75B7409f5967
+    ORIGIN_NAME="Base Sepolia"
+    ;;
+  *)
+    echo "ORIGIN_CHAIN must be sepolia or base-sepolia (got: $ORIGIN_CHAIN)" >&2
+    exit 2
+    ;;
+esac
+
+: "${RPC_ORIGIN:=${RPC_BASE:-$DEFAULT_RPC}}"
+: "${ORIGIN_CHAIN_ID:=$DEFAULT_CHAIN_ID}"
+: "${DEST_CHAIN_ID:=$ORIGIN_CHAIN_ID}"
+: "${CALLBACK_PROXY:=$DEFAULT_PROXY}"
+: "${EXPLORER:=$DEFAULT_EXPLORER}"
+: "${REACTIVE_FAUCET:=$DEFAULT_FAUCET}"
+: "${RPC_LASNA:=https://lasna-rpc.rnk.dev/}"
+: "${SYSTEM:=0x8888888888888888888888888888888888888888}"
+: "${FUND_REACT:=0.2ether}"
+: "${FUND_ETH:=0.005ether}"
+: "${DEMO_USER:=${OWNER:-}}"
+
+if [[ "$ORIGIN_CHAIN_ID" != "$DEFAULT_CHAIN_ID" ]]; then
+  echo "ORIGIN_CHAIN_ID=$ORIGIN_CHAIN_ID does not match ORIGIN_CHAIN=$ORIGIN_CHAIN ($DEFAULT_CHAIN_ID)" >&2
+  exit 2
+fi
+if [[ "$DEST_CHAIN_ID" != "$ORIGIN_CHAIN_ID" ]]; then
+  echo "DEST_CHAIN_ID must equal ORIGIN_CHAIN_ID for this build" >&2
+  exit 2
+fi
+
+AUTH=()
+if [[ -n "${ACCOUNT:-}" ]]; then
+  AUTH=(--account "$ACCOUNT")
+elif [[ -n "${PRIVATE_KEY:-}" ]]; then
+  AUTH=(--private-key "$PRIVATE_KEY")
+else
+  echo "set ACCOUNT or PRIVATE_KEY (see deploy/config.env.example)" >&2
+  exit 2
+fi
+
+DEPLOYER=$(cast wallet address "${AUTH[@]}")
+if [[ -z "${OWNER:-}" ]]; then
+  OWNER=$DEPLOYER
+fi
+if [[ "$OWNER" != "$DEPLOYER" ]]; then
+  echo "OWNER must be the deployer for this script (owner=$OWNER deployer=$DEPLOYER)" >&2
+  exit 2
+fi
+: "${DEMO_USER:=$OWNER}"
+
+say() { printf '\n== %s ==\n' "$*"; }
+
+say "preflight — $ORIGIN_NAME ($ORIGIN_CHAIN_ID) + Reactive Lasna (5318007)"
+ORIGIN_ID=$(cast chain-id --rpc-url "$RPC_ORIGIN")
+LASNA_ID=$(cast chain-id --rpc-url "$RPC_LASNA")
+[[ "$ORIGIN_ID" == "$ORIGIN_CHAIN_ID" ]] || { echo "origin RPC chain $ORIGIN_ID != $ORIGIN_CHAIN_ID" >&2; exit 2; }
+[[ "$LASNA_ID" == "5318007" ]] || { echo "Lasna RPC chain $LASNA_ID != 5318007" >&2; exit 2; }
+[[ "$(cast code "$CALLBACK_PROXY" --rpc-url "$RPC_ORIGIN")" != "0x" ]] || { echo "no callback proxy code at $CALLBACK_PROXY on $ORIGIN_NAME" >&2; exit 2; }
+[[ "$(cast code "$SYSTEM" --rpc-url "$RPC_LASNA")" != "0x" ]] || { echo "no system code at $SYSTEM on Lasna" >&2; exit 2; }
+
+ORIGIN_BAL=$(cast balance "$OWNER" --rpc-url "$RPC_ORIGIN")
+REACT_BAL=$(cast balance "$OWNER" --rpc-url "$RPC_LASNA")
+echo "deployer     $OWNER"
+echo "$ORIGIN_NAME $ORIGIN_BAL wei"
+echo "Lasna        $REACT_BAL wei"
+if [[ $DRY_RUN -eq 0 ]]; then
+  [[ "$ORIGIN_BAL" != "0" ]] || { echo "deployer has no $ORIGIN_NAME ETH: use a faucet first" >&2; exit 2; }
+  [[ "$REACT_BAL" != "0" ]] || {
+    echo "deployer has no lREACT on Lasna. Send 0.01 $ORIGIN_NAME ETH to the Reactive faucet:" >&2
+    echo "  cast send $REACTIVE_FAUCET \"request(address)\" $OWNER --value 0.01ether --rpc-url $RPC_ORIGIN <your-auth-flag>" >&2
+    exit 2
+  }
+else
+  echo "[dry-run] skipping balance requirement"
+fi
+
+create() {
+  local rpc=$1
+  shift
+  if [[ $DRY_RUN -eq 1 ]]; then
+    echo "[dry-run] forge create --rpc-url $rpc $*" >&2
+    echo '{"deployedTo":"0x0000000000000000000000000000000000000001","transactionHash":"0x0"}'
+  else
+    forge create --json --broadcast --rpc-url "$rpc" "${AUTH[@]}" "$@"
+  fi
+}
+
+say "1/7 demo quote token (mUSDC, 6 decimals)"
+OUT=$(create "$RPC_ORIGIN" src/mocks/MockERC20.sol:MockERC20 \
+  --constructor-args "Mock USD Coin" "mUSDC" 6 "$OWNER")
+USDC=$(jq -r .deployedTo <<<"$OUT")
+USDC_TX=$(jq -r .transactionHash <<<"$OUT")
+echo "USDC       $USDC  $USDC_TX"
+
+say "2/7 demo base token (mWETH, 18 decimals)"
+OUT=$(create "$RPC_ORIGIN" src/mocks/MockERC20.sol:MockERC20 \
+  --constructor-args "Mock Wrapped Ether" "mWETH" 18 "$OWNER")
+WETH=$(jq -r .deployedTo <<<"$OUT")
+WETH_TX=$(jq -r .transactionHash <<<"$OUT")
+echo "WETH       $WETH  $WETH_TX"
+
+say "3/7 price feed ($ORIGIN_NAME)"
+OUT=$(create "$RPC_ORIGIN" src/PriceFeed.sol:PriceFeed --constructor-args "$OWNER" "$OWNER")
+FEED=$(jq -r .deployedTo <<<"$OUT")
+FEED_TX=$(jq -r .transactionHash <<<"$OUT")
+echo "PRICE_FEED $FEED  $FEED_TX"
+
+say "4/7 reactive contract (Lasna)"
+OUT=$(create "$RPC_LASNA" src/DcaReactive.sol:DcaReactive \
+  --constructor-args "$ORIGIN_CHAIN_ID" "$FEED" "$DEST_CHAIN_ID" "$OWNER")
+REACTIVE=$(jq -r .deployedTo <<<"$OUT")
+REACTIVE_TX=$(jq -r .transactionHash <<<"$OUT")
+echo "REACTIVE   $REACTIVE  $REACTIVE_TX"
+
+say "5/7 vault ($ORIGIN_NAME)"
+OUT=$(create "$RPC_ORIGIN" src/DcaVault.sol:DcaVault \
+  --constructor-args "$USDC" "$WETH" "$FEED" "$CALLBACK_PROXY" "$REACTIVE" "$OWNER")
+VAULT=$(jq -r .deployedTo <<<"$OUT")
+VAULT_TX=$(jq -r .transactionHash <<<"$OUT")
+echo "VAULT      $VAULT  $VAULT_TX"
+
+say "6/7 bind vault on the reactive contract"
+if [[ $DRY_RUN -eq 1 ]]; then
+  echo "[dry-run] cast send DcaReactive.setVault($VAULT)"
+  SET_VAULT_TX=0x0
+else
+  SET_VAULT_TX=$(cast send --json --rpc-url "$RPC_LASNA" "${AUTH[@]}" \
+    "$REACTIVE" "setVault(address)" "$VAULT" | jq -r .transactionHash)
+fi
+echo "setVault   $SET_VAULT_TX"
+
+say "7/7 fund reactive and vault callback reserve"
+if [[ $DRY_RUN -eq 1 ]]; then
+  echo "[dry-run] system.depositTo($REACTIVE) value $FUND_REACT"
+  FUND_REACT_TX=0x0
+  echo "[dry-run] proxy.depositTo($VAULT) value $FUND_ETH"
+  FUND_ETH_TX=0x0
+else
+  FUND_REACT_TX=$(cast send --json --rpc-url "$RPC_LASNA" "${AUTH[@]}" \
+    "$SYSTEM" "depositTo(address)" "$REACTIVE" --value "$FUND_REACT" | jq -r .transactionHash)
+  FUND_ETH_TX=$(cast send --json --rpc-url "$RPC_ORIGIN" "${AUTH[@]}" \
+    "$CALLBACK_PROXY" "depositTo(address)" "$VAULT" --value "$FUND_ETH" | jq -r .transactionHash)
+fi
+echo "fundReact  $FUND_REACT_TX"
+echo "fundVault  $FUND_ETH_TX"
+
+say "verify bindings"
+if [[ $DRY_RUN -eq 0 ]]; then
+  expect_addr() {
+    local got want label=$1
+    got=$(echo "$2" | tr 'A-F' 'a-f')
+    want=$(echo "$3" | tr 'A-F' 'a-f')
+    [[ "$got" == "$want" ]] || { echo "$label mismatch: $got != $want" >&2; exit 3; }
+    echo "ok  $label"
+  }
+  expect_addr "reactive.vault" "$(cast call "$REACTIVE" 'vault()(address)' --rpc-url "$RPC_LASNA")" "$VAULT"
+  expect_addr "reactive.PRICE_FEED" "$(cast call "$REACTIVE" 'PRICE_FEED()(address)' --rpc-url "$RPC_LASNA")" "$FEED"
+  expect_addr "vault.callbackSender" "$(cast call "$VAULT" '_CALLBACK_SENDER()(address)' --rpc-url "$RPC_ORIGIN")" "$REACTIVE"
+  expect_addr "vault.callbackProxy" "$(cast call "$VAULT" '_SERVICE_PROVIDER()(address)' --rpc-url "$RPC_ORIGIN")" "$CALLBACK_PROXY"
+  expect_addr "vault.quoteToken" "$(cast call "$VAULT" 'quoteToken()(address)' --rpc-url "$RPC_ORIGIN")" "$USDC"
+  expect_addr "vault.baseToken" "$(cast call "$VAULT" 'baseToken()(address)' --rpc-url "$RPC_ORIGIN")" "$WETH"
+  expect_addr "vault.priceFeed" "$(cast call "$VAULT" 'priceFeed()(address)' --rpc-url "$RPC_ORIGIN")" "$FEED"
+  expect_addr "vault.owner" "$(cast call "$VAULT" 'owner()(address)' --rpc-url "$RPC_ORIGIN")" "$OWNER"
+  [[ "$(cast call "$REACTIVE" 'ORIGIN_CHAIN_ID()(uint256)' --rpc-url "$RPC_LASNA" --json | jq -r '.[0]')" == "$ORIGIN_CHAIN_ID" ]] \
+    || { echo "origin chain binding mismatch" >&2; exit 3; }
+  echo "ok  reactive.originChainId"
+fi
+
+FEED_BLOCK=0
+if [[ $DRY_RUN -eq 0 ]]; then
+  FEED_BLOCK=$(cast to-dec "$(cast receipt "$FEED_TX" --json --rpc-url "$RPC_ORIGIN" | jq -r .blockNumber)")
+fi
+
+TS=$(date -u +%Y%m%dT%H%M%SZ)
+mkdir -p deployments
+OUT_FILE="deployments/${TS}.json"
+if [[ $DRY_RUN -eq 0 ]]; then
+  jq -n \
+    --arg ts "$TS" --arg owner "$OWNER" --arg demo_user "$DEMO_USER" --argjson block "$FEED_BLOCK" \
+    --arg origin_chain "$ORIGIN_CHAIN" --argjson origin_chain_id "$ORIGIN_CHAIN_ID" \
+    --arg rpc_origin "$RPC_ORIGIN" --arg rpc_lasna "$RPC_LASNA" \
+    --arg explorer "$EXPLORER" --arg proxy "$CALLBACK_PROXY" --arg faucet "$REACTIVE_FAUCET" \
+    --arg usdc "$USDC" --arg weth "$WETH" --arg feed "$FEED" --arg reactive "$REACTIVE" --arg vault "$VAULT" \
+    --arg usdc_tx "$USDC_TX" --arg weth_tx "$WETH_TX" --arg feed_tx "$FEED_TX" \
+    --arg reactive_tx "$REACTIVE_TX" --arg vault_tx "$VAULT_TX" \
+    --arg set_vault_tx "$SET_VAULT_TX" --arg fund_react_tx "$FUND_REACT_TX" --arg fund_eth_tx "$FUND_ETH_TX" \
+    '{ts:$ts, block:$block, deployer:$owner, owner:$owner, demo_user:$demo_user,
+      origin_chain:$origin_chain, origin_chain_id:$origin_chain_id,
+      rpc_origin:$rpc_origin, rpc_lasna:$rpc_lasna,
+      explorer:$explorer, callback_proxy:$proxy, reactive_faucet:$faucet,
+      chain_ids:{origin:$origin_chain_id, reactive:5318007},
+      contracts:{usdc:$usdc, weth:$weth, price_feed:$feed, reactive:$reactive, vault:$vault},
+      txs:{deploy_usdc:$usdc_tx, deploy_weth:$weth_tx, deploy_feed:$feed_tx,
+           deploy_reactive:$reactive_tx, deploy_vault:$vault_tx,
+           set_vault:$set_vault_tx, fund_reactive:$fund_react_tx, fund_vault:$fund_eth_tx}}' >"$OUT_FILE"
+  cp "$OUT_FILE" deployments/latest.json
+  echo "wrote $OUT_FILE"
+fi
+
+say "done — $ORIGIN_NAME"
+echo "Explorer:  $EXPLORER"
+echo "USDC:      $EXPLORER/address/$USDC"
+echo "WETH:      $EXPLORER/address/$WETH"
+echo "Feed:      $EXPLORER/address/$FEED"
+echo "Vault:     $EXPLORER/address/$VAULT"
+echo "Reactive:  https://lasna.reactscan.net/address/$REACTIVE"
+if [[ $DRY_RUN -eq 1 ]]; then
+  echo "Dry run only. Fund lREACT with 0.01 $ORIGIN_NAME ETH to $REACTIVE_FAUCET if the Lasna balance is zero."
+else
+  echo "Next: ./demo/setup_plan.sh"
+fi
