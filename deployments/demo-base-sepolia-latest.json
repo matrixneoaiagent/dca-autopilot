@@ -1,0 +1,23 @@
+{
+  "ts": "20261125T212246Z",
+  "plan_id": 1,
+  "owner": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+  "demo_user": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+  "params": {
+    "base_per_buy": 10000000000000000,
+    "drawdown_bps": 500,
+    "cooldown": 30,
+    "max_buys": 5,
+    "quote_budget": 200000000
+  },
+  "txs": {
+    "mint_usdc": "0x9be25b9626e678ae472e41b59fcef506861c623fd6a49838f89b807f9d03f464",
+    "mint_weth": "0x889029e76ffee471666887808ec1d471c856cb7b1396c0348b1f6fe0ce4414f8",
+    "approve_usdc": "0x1722925d9eac51a0e0ddb6ac26b93bb4fea553612331885b3b214e07301437b6",
+    "approve_weth": "0xb1430b4d13449170dde122444a5a10e33df2d6a6438484cbbb5da8e345ae7533",
+    "deposit_quote": "0xd251ef763dc30ffb6d359dde37b81815e4e233278012a1889409ff5f4e97397f",
+    "create_plan": "0xd6cdcbeef1fe2d48802038796f0fddaba5689664411835163dac1e2dee3af6b2",
+    "deposit_base_reserve": "0x84f15e84511beb964641512a33acd5ff60e216db79024e6459ffe579d155e4bc"
+  },
+  "explorer": "https://sepolia.basescan.org"
+}

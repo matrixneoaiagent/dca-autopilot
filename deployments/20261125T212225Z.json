@@ -1,0 +1,35 @@
+{
+  "ts": "20261125T212225Z",
+  "block": 63599307,
+  "deployer": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+  "owner": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+  "demo_user": "0xa15c58e7008Fc7A0331cFcc86A28Af99FD21b93c",
+  "origin_chain": "base-sepolia",
+  "origin_chain_id": 84532,
+  "rpc_origin": "https://sepolia.base.org",
+  "rpc_lasna": "https://lasna-rpc.rnk.dev/",
+  "explorer": "https://sepolia.basescan.org",
+  "callback_proxy": "0x476F44b11F5C942c58f4c8E3d0300E5710743585",
+  "reactive_faucet": "0x2afaFD298b23b62760711756088F75B7409f5967",
+  "chain_ids": {
+    "origin": 84532,
+    "reactive": 5318007
+  },
+  "contracts": {
+    "usdc": "0x78c4Fca284cd36408d5395ABfA738B9CAd7A6aec",
+    "weth": "0x790e35eF3F2aCA3Bec0418fBe14973CDC80F89D9",
+    "price_feed": "0x89A289d29f1909dA0f6d8b0d6E002e49098Bcb39",
+    "reactive": "0x44F8aAA4F98B7Aa04EebeBCf7d43d622aAaa9334",
+    "vault": "0xf8D0a3e80524D4f9B63c67e6153Ba45637dFb518"
+  },
+  "txs": {
+    "deploy_usdc": "0x74772ff39f19b1ef634a3e856253f43847f5c46b01587473de4a21f1f4d86977",
+    "deploy_weth": "0x1ae39c80cf0a8e956f89f9518452c98e28b3d858d57943a0fa95479ff1f407dd",
+    "deploy_feed": "0x8b50e5a5878701367505aaa22ed875a70228eedef063e5991f5f6942fa262d08",
+    "deploy_reactive": "0xec3e283d9901016e1be687c8024c06a5ea9147450286a26a514ff477a717e00c",
+    "deploy_vault": "0x8ebe766932d43a31c97c0cbe70d975be15d10290c15123bfe9a96d95796013b1",
+    "set_vault": "0x3d7b49e5b6b1b3cec3e63da1aa48dd1716294470d8193a694513a607308d0d7f",
+    "fund_reactive": "0xa7017f55502e0d12a5102e60f66af456192fc390f04c7e9243df00639ba5e810",
+    "fund_vault": "0x7ded8d69d9e22762ba787f996d1c9b8d2333ede7e90f04b7a361f0d8f9ba7dfd"
+  }
+}

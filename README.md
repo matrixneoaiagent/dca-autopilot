@@ -220,6 +220,25 @@ The deploy script writes `deployments/latest.json`; `demo/setup_plan.sh` writes 
 | `executeBuy` callback tx / first `DcaBuy` | `0xe0ff40be2f9c7cb22e3d7d569147bb942e3bc769368a183c4325e0b9bc17a09f` |
 | Second buy `DcaBuy` tx | `0xa33e4728ff216b227ffb819e4d0a99d07a9d447aceedab89c2a64e3a2c91ffb8` |
 
+## Base Sepolia latency demo (Every Second Counts)
+
+The same contracts are live on **Base Sepolia (84532, 200 ms blocks since the
+Denim upgrade)** with the reactive on **Reactive Lasna (5318007)**:
+
+| Contract | Address |
+|---|---|
+| mUSDC | `0x78c4Fca284cd36408d5395ABfA738B9CAd7A6aec` |
+| mWETH | `0x790e35eF3F2aCA3Bec0418fBe14973CDC80F89D9` |
+| PriceFeed | `0x89A289d29f1909dA0f6d8b0d6E002e49098Bcb39` |
+| DcaReactive (Lasna) | `0x44F8aAA4F98B7Aa04EebeBCf7d43d622aAaa9334` |
+| DcaVault | `0xf8D0a3e80524D4f9B63c67e6153Ba45637dFb518` |
+
+Plan 1 executed two buys with **measured full-loop latency of 1.94 s and
+1.82 s** from the tick send to the `DcaBuy` (including ~0.41 s origin inclusion,
+the Lasna inference and the callback). Txs, method and limits:
+`docs/LATENCY_BASE_SEPOLIA.md`; deployment record:
+`deployments/base-sepolia-20261125T212225Z.json`.
+
 ## Limitations and production path
 
 - **Mock assets and oracle.** mUSDC and mWETH are owner-mintable demo tokens, and `PriceFeed` is a publisher, not a production oracle. Swapping in a Chainlink adapter or a DEX `Sync` subscription changes only the event source and the `priceOf` lookup.
