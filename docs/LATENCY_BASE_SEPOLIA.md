@@ -79,3 +79,24 @@ Mock mUSDC/mWETH and a publisher oracle, as in the main entry. The latency is a
 testnet measurement; Base Sepolia's 200 ms block time is a Denim feature and
 Reactive Lasna is a testnet. The measurement is wall-clock from a Python client
 on one host, not an instrumented validator.
+
+## Lasna reactive transactions (the missing half of the loop)
+
+The `DcaBuy` transactions above are the destination callbacks. The reactive
+transactions that requested them are on Lasna (chain 5318007), sent to the
+system contract `0x8888…8888`, both status 1, each emitting the reactive
+contract's `BuyRequested` event and the system `CallbackRequest`:
+
+| Buy | Lasna tx | Block | Lasna time (UTC) | DcaBuy (Base Sepolia) |
+|---|---|---|---|---|
+| #1 | `0xda619dad093fb069225322170c191b59bd23ab3e25b6386d76aa663f2a16c05a` | 9,246,624 | 21:23:34 | `0xdfe222c8…` at 21:23:37 |
+| #2 | `0xb59af50744295b1b85b468dae3f333383f8abe7143864bdf46359b4794c66b71` | 9,246,655 | 21:24:09 | `0xee9a7e2d…` at 21:24:11 |
+
+Origin tick #1 `0x1c629b3e…` was included at 21:23:36? No: the tick that
+triggered buy #1 is the 1900 tick, and the reactive transaction at 21:23:34
+is one Lasna block before the callback. The exact ordering visible on the two
+explorers is: origin tick → Lasna reactive transaction → destination callback.
+The 1.94 s figure is measured wall-clock from the client's tick send to the
+first observed `DcaBuy`, so it includes the origin inclusion, the Lasna
+inference and the callback inclusion.
+
