@@ -92,11 +92,11 @@ contract's `BuyRequested` event and the system `CallbackRequest`:
 | #1 | `0xda619dad093fb069225322170c191b59bd23ab3e25b6386d76aa663f2a16c05a` | 9,246,624 | 21:23:34 | `0xdfe222c8…` at 21:23:37 |
 | #2 | `0xb59af50744295b1b85b468dae3f333383f8abe7143864bdf46359b4794c66b71` | 9,246,655 | 21:24:09 | `0xee9a7e2d…` at 21:24:11 |
 
-Origin tick #1 `0x1c629b3e…` was included at 21:23:36? No: the tick that
-triggered buy #1 is the 1900 tick, and the reactive transaction at 21:23:34
-is one Lasna block before the callback. The exact ordering visible on the two
-explorers is: origin tick → Lasna reactive transaction → destination callback.
-The 1.94 s figure is measured wall-clock from the client's tick send to the
+Ordering (block timestamps on the two chains can differ by about a second): the 1900 tick
+was included on Base Sepolia at 21:23:35, the Lasna reactive transaction emitted
+`BuyRequested(planId=1, tickId=3, price=1900)` at 21:23:34 Lasna time and the `DcaBuy`
+callback landed at 21:23:36. For buy #2: the 1800 tick at 21:24:09, the Lasna
+`BuyRequested` at 21:24:09 and the `DcaBuy` callback at 21:24:10. The 1.94 s figure is measured wall-clock from the client's tick send to the
 first observed `DcaBuy`, so it includes the origin inclusion, the Lasna
 inference and the callback inclusion.
 
