@@ -1,6 +1,47 @@
 # DCA Autopilot
 
-**Reactive Omni Buildathon · Set It and Forget It**
+**Reactive Omni Buildathon · submitted to two tracks from one codebase**
+
+- **51867 — Set It and Forget It:** Ethereum Sepolia DCA vault, two live buys.
+- **51919 — Every Second Counts:** the same contracts on Base Sepolia (200 ms
+  blocks), full loop measured at **1.94 s** and **1.82 s**.
+
+## What you see in 30 seconds
+
+Deposit mock USDC, set a fixed WETH amount per buy and a drawdown rule, and a
+Reactive contract on Lasna watches the price feed and requests the buy when the
+market drops. The vault on the origin chain re-checks the oracle price, budget,
+cooldown and reserve before it moves tokens. You can close the tab: there is no
+server, keeper or API key.
+
+![The second live buy: 0.01 WETH for 18.00 USDC at 1800, with the DcaBuy transaction hash](docs/screenshot.png)
+
+- **Live (Sepolia, 51867):** two buys executed — 0.01 WETH for 19.10 USDC at 1910 and 0.01 WETH for 18.00 USDC at 1800; [plan](https://sepolia.etherscan.io/tx/0x1e65785a40d5d0e6e33b76761a150401ee8f55bab97f474d3980fff85b105c8d), [first `DcaBuy`](https://sepolia.etherscan.io/tx/0xe0ff40be2f9c7cb22e3d7d569147bb942e3bc769368a183c4325e0b9bc17a09f), [second `DcaBuy`](https://sepolia.etherscan.io/tx/0xa33e4728ff216b227ffb819e4d0a99d07a9d447aceedab89c2a64e3a2c91ffb8).
+- **Live (Base Sepolia, 51919):** [tick 3](https://sepolia.basescan.org/tx/0xdfe222c8179c04732dc7d7b19a18804e7e6d0536af536b6b5b74e141da98601f) bought at **1.94 s**, [tick 4](https://sepolia.basescan.org/tx/0xee9a7e2d5b3d2211adb54b263308ea956ad2abd6a2e254a5e5c76f9301ca222c) at **1.82 s** (tick send → `DcaBuy`).
+- **Video:** [Set It and Forget It, 2:15](https://matrixneoaiagent.github.io/demo-media/dca-dip.mp4) · [Every Second Counts, 56 s](https://matrixneoaiagent.github.io/demo-media/dca-latency.mp4).
+- **Tests:** `forge test` → **124 passed, 0 failed** (62 unique tests × Sepolia + Base Sepolia fixtures).
+- **For judges:** [2-minute verification](#judge-verification-2-minutes) · [who can do what](#who-can-do-what) · [prior work](#what-existed-before-this-hackathon).
+
+## What existed before this hackathon
+
+This repository was created on **2026-11-25**, during the Reactive Omni
+Buildathon. No DCA product, contract, deployment, front end or prior repository
+existed before the event; the contracts, tests, deploy scripts, demo tooling and
+video were written for this submission.
+
+Pre-existing material is limited to dependencies:
+
+- `lib/forge-std/` — Foundry test library.
+- `lib/reactive-lib-omni/` — Reactive Network's Omni callback library, vendored
+  at the pinned upstream commit.
+- Python packages in `requirements.txt` (web3, eth-account) and standard ERC-20
+  interfaces.
+
+The Reactive callback pattern is shared with our Sentinel entry (same event →
+callback discipline); no DCA logic, vault code, plan accounting or deployment was
+reused from it.
+
+## How the loop works
 
 DCA Autopilot is a set-and-forget dip buyer. Deposit mock USDC on Ethereum Sepolia, choose a fixed WETH amount per buy and a drawdown rule, and a Reactive contract on Lasna watches the price feed and pulls the trigger when the market drops. The vault on Sepolia authenticates every callback, checks the plan's budget and cooldown, and moves the tokens. You can close the tab.
 
@@ -92,6 +133,52 @@ This is the "last buy (or a rolling high)" rule in the brief. A plan created dur
 
 The first buy is the one place where the vault cannot independently reconstruct the rolling high-water mark: the feed stores prices, not a running maximum, and the vault does not see every tick. The reactive contract is trusted for that first trigger; from the second buy onward the vault re-checks the drawdown against its own last-buy price.
 
+## Who can do what
+
+| Action | Who can call it | What it can do | What it cannot do |
+|---|---|---|---|
+| `depositQuote` / `withdrawQuote` | anyone, for their own balance | move the caller's unallocated quote balance | touch another user's balance, a plan budget or the WETH reserve |
+| `createPlan` | any depositor | allocates the caller's own quote budget; max 32 plans | spend more than the caller deposited or change another plan |
+| `fundPlan` / `cancelPlan` | plan owner only | add budget, or cancel and refund the unspent budget (also while paused) | cancel or refund someone else's plan |
+| `executeBuy` | official callback proxy + registered reactive only | deliver the fixed `basePerBuy` WETH to the plan owner, once per tick | change the owner, plan terms or price feed; exceed budget, reserve or max buys; reuse a tick |
+| `retry(planId)` | anyone | re-request a buy that still satisfies every plan rule | bypass the vault's cooldown, drawdown, budget, oracle or price-age checks |
+| `pause` / `unpause` | owner | stop new deposits/plans/buys | block withdrawals or plan cancellation |
+| `withdrawBaseReserve` / `withdrawQuoteReserve` | owner, while unpaused | withdraw the owner-funded WETH reserve (which stops further buys) or quote revenue | touch quote allocated to active plans; users can still cancel and refund |
+| **Automation spend** | Reactive contract | at most the plan's `quoteBudget`, in fixed `basePerBuy` chunks, at most `maxBuys` times, only when the drawdown/cooldown rules pass | withdraw funds, change a plan, choose an arbitrary amount, exceed the budget, or transfer anything outside `executeBuy` |
+
+The reactive contract never holds user funds. The vault is the funds boundary,
+and the worst a triggered callback can do is execute the plan the owner already
+signed: a fixed base amount, inside the quote budget, to the plan owner.
+
+## Judge verification (2 minutes)
+
+```bash
+git clone https://github.com/matrixneoaiagent/dca-autopilot
+cd dca-autopilot
+forge test
+# Expected: 124 tests passed, 0 failed, 0 skipped (124 total tests)
+# No forge? nix-shell -p foundry --run 'forge test'
+
+# Sepolia entry (51867): plan 1 is still readable
+cast call 0xE9157B69b66dD4bd5A4AD0f0afdBac3f28e0987D "isPlanActive(uint256)(bool)" 1 \
+  --rpc-url https://ethereum-sepolia-rpc.publicnode.com
+# true
+cast receipt 0xe0ff40be2f9c7cb22e3d7d569147bb942e3bc769368a183c4325e0b9bc17a09f \
+  --rpc-url https://ethereum-sepolia-rpc.publicnode.com | grep -E "^status|^blockNumber"
+# status                  1 (success)
+
+# Base Sepolia latency entry (51919)
+cast call 0xf8D0a3e80524D4f9B63c67e6153Ba45637dFb518 "isPlanActive(uint256)(bool)" 1 \
+  --rpc-url https://sepolia.base.org
+# true
+cast receipt 0xdfe222c8179c04732dc7d7b19a18804e7e6d0536af536b6b5b74e141da98601f \
+  --rpc-url https://sepolia.base.org | grep -E "^status|^blockNumber"
+# status                  1 (success)
+```
+
+The two latency hashes, the Lasna reactive transactions and the measurement
+method are in `docs/LATENCY_BASE_SEPOLIA.md`; the Sepolia evidence table is above.
+
 ## Demo price path
 
 The local rehearsal and the E2E test use the same path. The plan is 0.01 WETH per buy, 5% drawdown, 30 s cooldown, 5 max buys, 200 USDC budget.
@@ -151,7 +238,7 @@ docs/
 
 ## Demo video
 
-[2:15 walkthrough](https://files.catbox.moe/wyo4sm.mp4) — architecture, live addresses, the two on-chain buys, the gas fix, and the tests.
+[2:15 walkthrough](https://matrixneoaiagent.github.io/demo-media/dca-dip.mp4) — architecture, live addresses, the two on-chain buys, the gas fix, and the tests. The 56-second Every Second Counts latency cut is [here](https://matrixneoaiagent.github.io/demo-media/dca-latency.mp4). Both are served by GitHub Pages as `video/mp4`, so they play inline.
 
 ## Reproduce
 

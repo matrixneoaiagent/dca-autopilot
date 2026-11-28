@@ -55,7 +55,7 @@ DCA Autopilot is a personal dip-buying rule: deposit a quote budget, set a fixed
 > **Usefulness:** Does it solve a problem real users have?
 > **Craft:** Readable code, a working demo, and documentation someone else could follow."
 
-Consequence: a repository plus a local Foundry test is not enough. The entry needs public testnet addresses and transaction hashes for the full loop. That is why `docs/SUBMISSION_CHECKLIST.md` has an evidence table and the deploy runbook is explicit. This session intentionally did not deploy; the orchestrator will.
+Consequence: a repository plus a local Foundry test is not enough. The entry needs public testnet addresses and transaction hashes for the full loop. That is why `docs/SUBMISSION_CHECKLIST.md` has an evidence table, the README records the live addresses, and the deploy runbook is explicit.
 
 ## 4. Submission requirements
 

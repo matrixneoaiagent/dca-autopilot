@@ -62,7 +62,7 @@ or a keeper would add a polling interval and an external key to the same rule.
 ## Reproduce
 
 ```bash
-cd /tmp/opencode/dca-sentinel
+cd dca-autopilot
 # the deployment is already live on Base Sepolia + Lasna
 python3 demo/monitor.py --watch
 # publish a new tick through the feed (owner key)
